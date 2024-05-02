@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+var settingsFilePath = "settings.json"
+
 const (
 	NUMBER_TYPE_RAMDOM    = iota
 	NUMBER_TYPE_INCREMENT = iota
@@ -25,6 +27,7 @@ type Settings struct {
 	TextAbove     string
 	TextBelow     string
 	NumberType    int
+	SaveLastRate  bool
 }
 
 var SettingsInstance Settings = Settings{
@@ -39,35 +42,40 @@ var SettingsInstance Settings = Settings{
 	TextAbove:     "",
 	TextBelow:     "",
 	NumberType:    NUMBER_TYPE_RAMDOM,
+	SaveLastRate:  false,
 }
 
 func InitSettings() {
-	settingsFilePath := "settings.json"
-
 	if _, err := os.Stat(settingsFilePath); errors.Is(err, os.ErrNotExist) {
-
-		data, err := json.MarshalIndent(SettingsInstance, "", "\t")
-		if err != nil {
-			panic(err)
-		}
-
 		fmt.Printf("Can't find settings file... Creating new one.\n\n")
-
-		err = os.WriteFile(settingsFilePath, data, 0644)
-		if err != nil {
-			panic(err)
-		}
+		SaveSettins()
 
 	} else {
-		data, err := os.ReadFile(settingsFilePath)
-		if err != nil {
-			panic(err)
-		}
+		LoadSettings()
+	}
+}
 
-		err = json.Unmarshal(data, &SettingsInstance)
-		if err != nil {
-			panic(err)
-		}
+func LoadSettings() {
+	data, err := os.ReadFile(settingsFilePath)
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(data, &SettingsInstance)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func SaveSettins() {
+	data, err := json.MarshalIndent(SettingsInstance, "", "\t")
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile(settingsFilePath, data, 0644)
+	if err != nil {
+		panic(err)
 	}
 }
 

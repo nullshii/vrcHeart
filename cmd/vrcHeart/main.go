@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
@@ -13,16 +16,36 @@ import (
 )
 
 var bpm int
+var isShuttingDown = false
 
 func main() {
 	splash.PrintSplash()
 	settingsManager.InitSettings()
 	settingsManager.FixFormatting()
 
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		isShuttingDown = true
+
+		if settingsManager.SettingsInstance.SaveLastRate {
+			settingsManager.SettingsInstance.StartRate = bpm
+			settingsManager.SaveSettins()
+		}
+
+		fmt.Println("\nShutting down...")
+		time.Sleep(1 * time.Second)
+		os.Exit(0)
+	}()
+
 	client := osc.NewClient(settingsManager.SettingsInstance.Address, settingsManager.SettingsInstance.Port)
 	bpm = settingsManager.SettingsInstance.StartRate
 
 	for {
+		if isShuttingDown {
+			return
+		}
 		sendHeartBeat(client, &settingsManager.SettingsInstance)
 		time.Sleep(time.Duration(settingsManager.SettingsInstance.SendFrequency) * time.Millisecond)
 	}
