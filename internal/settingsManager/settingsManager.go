@@ -37,8 +37,8 @@ var SettingsInstance Settings = Settings{
 	MinRate:       70,
 	MaxRate:       190,
 	StartRate:     120,
-	LeftEmoji:     "♥",
-	RightEmoji:    "♥",
+	LeftEmoji:     "♥ ",
+	RightEmoji:    " ♥",
 	TextAbove:     "",
 	TextBelow:     "",
 	NumberType:    NUMBER_TYPE_RAMDOM,
@@ -76,23 +76,5 @@ func SaveSettins() {
 	err = os.WriteFile(settingsFilePath, data, 0644)
 	if err != nil {
 		panic(err)
-	}
-}
-
-func FixFormatting() {
-	if SettingsInstance.TextAbove != "" {
-		SettingsInstance.TextAbove += "\n"
-	}
-
-	if SettingsInstance.TextBelow != "" {
-		SettingsInstance.TextBelow += "\n"
-	}
-
-	if SettingsInstance.LeftEmoji != "" {
-		SettingsInstance.LeftEmoji = SettingsInstance.LeftEmoji + " "
-	}
-
-	if SettingsInstance.RightEmoji != "" {
-		SettingsInstance.RightEmoji = " " + SettingsInstance.RightEmoji
 	}
 }

@@ -21,7 +21,6 @@ var isShuttingDown = false
 func main() {
 	splash.PrintSplash()
 	settingsManager.InitSettings()
-	settingsManager.FixFormatting()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
