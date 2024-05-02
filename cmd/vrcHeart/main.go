@@ -12,12 +12,15 @@ import (
 	"github.com/nullshii/vrcHeart/internal/splash"
 )
 
+var bpm int
+
 func main() {
 	splash.PrintSplash()
 	settingsManager.InitSettings()
 	settingsManager.FixFormatting()
 
 	client := osc.NewClient(settingsManager.SettingsInstance.Address, settingsManager.SettingsInstance.Port)
+	bpm = settingsManager.SettingsInstance.StartRate
 
 	for {
 		sendHeartBeat(client, &settingsManager.SettingsInstance)
@@ -26,19 +29,23 @@ func main() {
 }
 
 func sendHeartBeat(client *osc.Client, s *settingsManager.Settings) {
-	bpm := s.StartRate
+	if settingsManager.SettingsInstance.NumberType == settingsManager.NUMBER_TYPE_RAMDOM {
+		randAdd := randomExtensions.RandRange(1, 3)
+		randNum := randomExtensions.RandRange(1, 5)
 
-	randAdd := randomExtensions.RandRange(1, 3)
-	randNum := randomExtensions.RandRange(1, 5)
+		if randNum == 2 { //Add big chunk
+			randAdd += randomExtensions.RandRange(6, 18)
+		}
 
-	if randNum == 2 { //Add big chunk
-		randAdd += randomExtensions.RandRange(6, 18)
-	}
-
-	if randNum == 3 { // add small amount
-		bpm += randAdd
-	} else {
-		bpm -= randAdd
+		if randNum == 3 { // add small amount
+			bpm += randAdd
+		} else {
+			bpm -= randAdd
+		}
+	} else if settingsManager.SettingsInstance.NumberType == settingsManager.NUMBER_TYPE_INCREMENT {
+		bpm++
+	} else if settingsManager.SettingsInstance.NumberType == settingsManager.NUMBER_TYPE_DECREMEMT {
+		bpm--
 	}
 
 	bpm = mathExtensions.Clamp(bpm, s.MinRate, s.MaxRate)

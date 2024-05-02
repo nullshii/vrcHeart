@@ -7,6 +7,12 @@ import (
 	"os"
 )
 
+const (
+	NUMBER_TYPE_RAMDOM    = iota
+	NUMBER_TYPE_INCREMENT = iota
+	NUMBER_TYPE_DECREMEMT = iota
+)
+
 type Settings struct {
 	Address       string
 	Port          int
@@ -18,6 +24,7 @@ type Settings struct {
 	RightEmoji    string
 	TextAbove     string
 	TextBelow     string
+	NumberType    int
 }
 
 var SettingsInstance Settings = Settings{
@@ -31,6 +38,7 @@ var SettingsInstance Settings = Settings{
 	RightEmoji:    "♥",
 	TextAbove:     "",
 	TextBelow:     "",
+	NumberType:    NUMBER_TYPE_RAMDOM,
 }
 
 func InitSettings() {
