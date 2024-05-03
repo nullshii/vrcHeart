@@ -1,0 +1,8 @@
+Website = "https://nullshii.dev"
+
+[Details]
+  Icon = "../../assets/Icon.png"
+  Name = "VRC Heart"
+  ID = "dev.nullshii.vrcheart"
+  Version = "2.0.0"
+  Build = 6

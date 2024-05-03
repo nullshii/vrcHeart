@@ -2,56 +2,78 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/nullshii/vrcHeart/internal/mathExtensions"
 	"github.com/nullshii/vrcHeart/internal/randomExtensions"
 	"github.com/nullshii/vrcHeart/internal/settingsManager"
-	"github.com/nullshii/vrcHeart/internal/splash"
+	"github.com/nullshii/vrcHeart/internal/uiManager"
 )
 
 var bpm int
-var isShuttingDown = false
+var isRunning = false
+var settings = settingsManager.Settings{}
 
 func main() {
-	splash.PrintSplash()
-	settingsManager.InitSettings()
+	settingsManager.InitSettings(&settings)
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	uiManager.OnApplicationQuit = onApplicationQuit
+	uiManager.OnSettingsSave = onSettingsSave
+
+	uiManager.OnStartSending = onStartSending
+	uiManager.OnStopSending = onStopSending
+
+	fApp := uiManager.InitUI(&settings)
+
+	client := osc.NewClient(settings.Address, settings.Port)
+	bpm = settings.StartRate
+
 	go func() {
-		<-c
-		isShuttingDown = true
-
-		if settingsManager.SettingsInstance.SaveLastRate {
-			settingsManager.SettingsInstance.StartRate = bpm
-			settingsManager.SaveSettins()
+		for range time.Tick(time.Duration(settings.SendFrequency) * time.Millisecond) {
+			if isRunning {
+				sendHeartBeat(client)
+			}
 		}
-
-		fmt.Println("\nShutting down...")
-		time.Sleep(1 * time.Second)
-		os.Exit(0)
 	}()
 
-	client := osc.NewClient(settingsManager.SettingsInstance.Address, settingsManager.SettingsInstance.Port)
-	bpm = settingsManager.SettingsInstance.StartRate
-
-	for {
-		if isShuttingDown {
-			return
-		}
-		sendHeartBeat(client, &settingsManager.SettingsInstance)
-		time.Sleep(time.Duration(settingsManager.SettingsInstance.SendFrequency) * time.Millisecond)
-	}
+	(*fApp).Run()
 }
 
-func sendHeartBeat(client *osc.Client, s *settingsManager.Settings) {
-	if settingsManager.SettingsInstance.NumberType == settingsManager.NUMBER_TYPE_RAMDOM {
+func onStartSending() {
+	isRunning = true
+}
+
+func onStopSending() {
+	isRunning = false
+}
+
+func onApplicationQuit() {
+	isRunning = false
+
+	if settings.SaveOnQuit {
+		if settings.SaveLastRate {
+			settings.StartRate = bpm
+		}
+
+		onSettingsSave()
+	}
+
+	fmt.Println("Shitting down")
+}
+
+func onSettingsSave() {
+	if settings.SaveLastRate {
+		settings.StartRate = bpm
+	}
+
+	settingsManager.SaveSettins(settings)
+	fmt.Println("Saving settings")
+}
+
+func sendHeartBeat(client *osc.Client) {
+	if settings.NumberType == settingsManager.NUMBER_TYPE_RAMDOM {
 		randAdd := randomExtensions.RandRange(1, 3)
 		randNum := randomExtensions.RandRange(1, 5)
 
@@ -64,15 +86,25 @@ func sendHeartBeat(client *osc.Client, s *settingsManager.Settings) {
 		} else {
 			bpm -= randAdd
 		}
-	} else if settingsManager.SettingsInstance.NumberType == settingsManager.NUMBER_TYPE_INCREMENT {
+	} else if settings.NumberType == settingsManager.NUMBER_TYPE_INCREMENT {
 		bpm++
-	} else if settingsManager.SettingsInstance.NumberType == settingsManager.NUMBER_TYPE_DECREMEMT {
+	} else if settings.NumberType == settingsManager.NUMBER_TYPE_DECREMEMT {
 		bpm--
 	}
 
-	bpm = mathExtensions.Clamp(bpm, s.MinRate, s.MaxRate)
+	bpm = mathExtensions.Clamp(bpm, settings.MinRate, settings.MaxRate)
 
-	text := fmt.Sprintf("%s%s%v%s%s", s.TextAbove, s.LeftEmoji, bpm, s.RightEmoji, s.TextBelow)
+	ta := settings.TextAbove
+	if ta != "" && !strings.HasSuffix(ta, "\n") {
+		ta += "\n"
+	}
+
+	tb := settings.TextBelow
+	if tb != "" && !strings.HasSuffix(tb, "\n") {
+		tb = "\n" + tb
+	}
+
+	text := fmt.Sprintf("%s%s%v%s%s", ta, settings.LeftEmoji, bpm, settings.RightEmoji, tb)
 
 	msg := osc.NewMessage("/chatbox/input")
 	msg.Append(text)

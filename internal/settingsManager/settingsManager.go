@@ -3,7 +3,6 @@ package settingsManager
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 )
 
@@ -28,47 +27,48 @@ type Settings struct {
 	TextBelow     string
 	NumberType    int
 	SaveLastRate  bool
+	SaveOnQuit    bool
 }
 
-var SettingsInstance Settings = Settings{
-	Address:       "127.0.0.1",
-	Port:          9000,
-	SendFrequency: 1500,
-	MinRate:       70,
-	MaxRate:       190,
-	StartRate:     120,
-	LeftEmoji:     "♥ ",
-	RightEmoji:    " ♥",
-	TextAbove:     "",
-	TextBelow:     "",
-	NumberType:    NUMBER_TYPE_RAMDOM,
-	SaveLastRate:  false,
-}
+func InitSettings(settings *Settings) {
+	defaultSettings := Settings{
+		Address:       "127.0.0.1",
+		Port:          9000,
+		SendFrequency: 1500,
+		MinRate:       70,
+		MaxRate:       190,
+		StartRate:     120,
+		LeftEmoji:     "♥ ",
+		RightEmoji:    " ♥",
+		TextAbove:     "",
+		TextBelow:     "",
+		NumberType:    NUMBER_TYPE_RAMDOM,
+		SaveLastRate:  false,
+		SaveOnQuit:    true,
+	}
 
-func InitSettings() {
 	if _, err := os.Stat(settingsFilePath); errors.Is(err, os.ErrNotExist) {
-		fmt.Printf("Can't find settings file... Creating new one.\n\n")
-		SaveSettins()
+		SaveSettins(defaultSettings)
 
 	} else {
-		LoadSettings()
+		LoadSettings(settings)
 	}
 }
 
-func LoadSettings() {
+func LoadSettings(settings *Settings) {
 	data, err := os.ReadFile(settingsFilePath)
 	if err != nil {
 		panic(err)
 	}
 
-	err = json.Unmarshal(data, &SettingsInstance)
+	err = json.Unmarshal(data, settings)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func SaveSettins() {
-	data, err := json.MarshalIndent(SettingsInstance, "", "\t")
+func SaveSettins(settings Settings) {
+	data, err := json.MarshalIndent(settings, "", "\t")
 	if err != nil {
 		panic(err)
 	}
