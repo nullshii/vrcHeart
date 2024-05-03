@@ -49,3 +49,4 @@
 | TextBelow     | Text below bpm                                                                                                     | Any text                                 |           |
 | NumberType    | BPM Type                                                                                                           | 0 - Random, 1 - increment, 2 - decrement | 0         |
 | SaveLastRate  | Save last BPM to next start rate (useful for saving increment or decrement rates)                                  | true, false                              | false     |
+| SaveOnQuit    | Save settings when quitting app                                                                                    | true, false                              | true      |
